@@ -1,0 +1,231 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%2345678901234567890123456789012345678901234567890123456789012345678901234567890
+%        1         2         3         4         5         6         7         8
+
+\documentclass[letterpaper, 11 pt, conference]{ieeeconf}  % Comment this line out
+                                                          % if you need a4paper
+%\documentclass[a4paper, 10pt, conference]{ieeeconf}      % Use this line for a4
+                                                          % paper
+
+\IEEEoverridecommandlockouts                              % This command is only
+                                                          % needed if you want to
+                                                          % use the \thanks command
+\overrideIEEEmargins
+% See the \addtolength command later in the file to balance the column lengths
+% on the last page of the document
+
+
+
+% The following packages can be found on http:\\www.ctan.org
+\usepackage{graphicx}
+%\usepackage{epsfig} % for postscript graphics files
+%\usepackage{mathptmx} % assumes new font selection scheme installed
+%\usepackage{times} % assumes new font selection scheme installed
+%\usepackage{amsmath} % assumes amsmath package installed
+%\usepackage{amssymb}  % assumes amsmath package installed
+\usepackage{cite}
+
+\title{\LARGE \bf
+Review Prediction in Yelp Network}
+
+%\author{ \parbox{3 in}{\centering Huibert Kwakernaak*
+%         \thanks{*Use the $\backslash$thanks command to put information here}\\
+%         Faculty of Electrical Engineering, Mathematics and Computer Science\\
+%         University of Twente\\
+%         7500 AE Enschede, The Netherlands\\
+%         {\tt\small h.kwakernaak@autsubmit.com}}
+%         \hspace*{ 0.5 in}
+%         \parbox{3 in}{ \centering Pradeep Misra**
+%         \thanks{**The footnote marks may be inserted manually}\\
+%        Department of Electrical Engineering \\
+%         Wright State University\\
+%         Dayton, OH 45435, USA\\
+%         {\tt\small pmisra@cs.wright.edu}}
+%}
+
+\author{Luis A. Perez$^{1}$% <-this % stops a space
+\thanks{$^{1}$L. Perez is an MS Candidate in the School of Engineering at Stanford University,
+        450 Serra Mall, Stanford, CA 94305, USA
+        {\tt\small luis0 at stanford.edu}}%
+}
+
+
+\begin{document}
+
+
+
+\maketitle
+\thispagestyle{empty}
+\pagestyle{empty}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{abstract}
+
+The problem of predicting future interactions in a network has been studied at length, with multiple approaches, from using local node-specific information to more global network structure, demonstrating different amounts of effectiveness \cite{PintrestProject}. It is a problem of great practical relevance since it can be used to suggest friend recommendations, product recommendations, and even predict individual user actions. In our reaction paper, we summarize and critique important and relevant papers dealing with this task, such as \cite{TheLinkPredictionProblemForSocialNetworks} which presents a network-only approach analyzing node ``proximity'', \cite{Leskovec:2010:PPN:1772690.1772756} which tackles the task of predicting edges in signed networks, and \cite{Hasan06linkprediction} which utilizes typical ML methods to mix multiple network-level signals in its model.
+
+Our proposed project seeks to explore methods to alleviate some of the limitations from previous work by considering a specific, real-world, practical network - the Yelp Review Network. Specifically, we seek to model the problem of predicting a user's rating of a business by using both features extracted using NLP and Deep Learning about the user/business, as well as the network structure itself. We plan to use the methods in the papers surveyed, with additional modifications for our particular scenario, such as incorporating relative strength of positive/negative reviews (based on the star rating), as well as additional information about specific users/business, such as previous average ratings, like-ability, and influence/centrality.
+
+\end{abstract}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Reaction Paper: Link/Rating Predictions}
+In this section, we present a short review of the literature concerning link prediction. In general, link prediction is the task of, given a graph $G(V,E)$, predicting unobserved links between nodes (possibly due to missing data or to time constraints). Accessible to the algorithms seeking to predict the probability of a new edge is the entirety of the network structure, such as (1) number of neighbors and (2) existing connections, as well as entity-level information and properties (when we consider metadata-rich graphs). This problem has been studied the most in the context of social networks, where edges represent relationships between people, and the end effect of link prediction is predicting who will become friends (or enemies). The applications of a relatively successful system in this context are immediate.
+
+However, multiple challenges exists when considering this problem. Large social networks and interaction networks are often quite sparse with relatively high-clustering coefficients but low ratio of existing edges to possible edges. This leads to relatively ``accurate'' models that simply predict the non-existence of an edge. Furthermore, there is often an open question which can vary from network-to-network as to how much each node's identity vs its relationship to other nodes affects the creation of new edges.
+
+
+\subsection{The Link Prediction Problem for Social Networks}
+In this paper, Liben-Nowell and Kleinberg \cite{TheLinkPredictionProblemForSocialNetworks} formalize the \textit{link prediction problem} and develop a proximity-based approach to predict the formation of links in a large co-authorship network. The model focuses on the network topology alone, ignoring any additional meta-data associated with each node since its basic hypothesis is that the known network connections offer sufficient insight to accurately predict network growth over time.
+
+\subsubsection{Summary}
+The paper formally tackles the problem of given a social graph $G = (V,E)$ where each edge represents an interaction between $u,v$ and a particular timestamp $t$, can we use a subset of the graph across time (ie, with edges only in the interval $[t,t']$ to predict a future subset of the graph $G'$). The methods presented ignore the creation of new nodes, focusing only on edge prediction.
+
+The paper presents multiple link predictors $p$, each focusing on only network structure. For example, some intuitive predictors (there are many others studied, though not necessarily as intuitive) for the edge creation between $x$ and $y$:
+
+\begin{enumerate}
+\item graph distance -- (negated) length of the shortest path between $x$ and $y$
+\item preferential attachments -- $|\Gamma(x)| \cdot |\Gamma(y)|$ where $\Gamma: V \to 2^V$ is a map from nodes to neighbors of nodes.
+\end{enumerate}
+
+Each of the above predictors $p$ can output a ranked list of most likely edges. The paper evaluates effectiveness by comparing calculating the percentage of edges which are correctly predicted to exists in the test data. The baseline for the paper appears to be a random predictor based on the training graph and the graph distance predictor. The predictors are evaluated over five difference co-authoring networks. =
+
+The predictors can be classified into essentially three categories:
+
+\begin{itemize}
+\item Predictors based on local network structure
+\item Predictors based on global network structure
+\item Meta predictors based on a mixture of the above two 
+\end{itemize}
+
+All predictors performed above the random baseline, on average. The hitting time predictors performed below the graph distance baseline, with a much narrower positive gap for the remaining predictors. Most predictors performed on-par with just a common neighbors predictors.
+
+
+\subsubsection{Critique}
+
+The paper does a good job of defining and presenting the ``link prediction'' problem, which is extremely useful. It represents a good reference for the theoretical foundations and poses many possible network-level features which may prove useful in far more complicated models. However, there are several limitation. Liben-Nowell and Kleinberg focus exclusively on network-level properties, completely ignoring any additional information based on the node identity. While this approach is admirable, the final results of only correctly predicting $16$\% of created edges leaves significant room for improvement. Furthermore, the predictors, while evaluated across multiple networks, are evaluated only on author collaboration networks, which are likely to be somewhat similar. The paper does not discuss how well it expects this approach to generalize to other networks (such a social networks or review networks). Lastly, the paper does not place any emphasis on predicting the ``weight'' of the edge, rather simply its creation. It does not have a concept of ``positive'' and ``negative'' edges, which limits its application to other contexts. 
+
+\subsubsection{Brainstorming}
+Liben-Nowell and Kleinberg make use of multiple features of the network to successfully (when compared to a random model) predict the creation of links. This can be useful in the Yelp Rating Predictions as these network level features can be used to train our prediction models, such as logistic regression. Collapsing our bipartite graph of reviews can give us insights as to the similarity between different users, which can help predict ratings for particulars users on certain businesses.
+
+\subsection{Predicting Positive and Negative Links in Online Social Networks}
+
+The paper by Leskovec et al. \cite{Leskovec:2010:PPN:1772690.1772756} seeks to introduce the nuance of both ``positive'' and ``negative'' relationships to the link prediction problem. In concrete, it seeks to predict the sign of each edge in a graph based on the local structure of the surrounding edges. Such predictions can be helpful in determining future interactions between users, as well as determining polarization of groups and communities. 
+
+\subsubsection{Summary}
+Leskovec et al. introduce the ``edge sign prediction problem'' and study it in three social networks where explicit trust/distrust is recorded as part of the graph structure, work which is later expanded by Chiang et al. \cite{Chiang:2011:ELC:2063576.2063742}. The explicit sign of the edges is given by a vote for or a vote against, for example, in the Wikipedia election network. They find that their prediction performance degrades only slightly across these three networks, even when the model is trained on one network and evaluated against another.
+
+The paper also introduces social-psychological theories of balance and status and demonstrates that these seems to agree, in some predictions, with the models explored in the paper.
+
+Furthermore, the paper introduces the novel idea of using a machine learning approach built on top of the network features to improve the performance of the model. Rather than rely directly on any one network features, it instead extracts these features from the network and uses them in a machine learning model, achieving great performance. The features selected are, roughly speaking:
+
+\begin{itemize}
+\item Degree features for pair $(u,v)$ - there are seven such features, which are (1) the number of incoming positive edges to $v$, (2) the number of incoming negative edges to $v$, (3) the number of outgoing positive edges from $u$, (4) the number of outgoing negative edges from $u$, (5) the total number of common neighbors between $u$ and $v$, (6) the out-degree of $u$ and the (7) in-degree of $v$.
+\item Triad features - We consider 16 distinct triads produced by $u,v,w$ and count how many of each type of triad.
+\end{itemize}
+
+The above features are fed into a logistic regression model and are used to relatively successfully predict the sign of unknown edges.
+
+\subsubsection{Critique}
+The paper does a great job of defining the \textit{edge sign prediction problem} and presents a solid theoretical foundation for the models it explores. However, it lacks the nuances in real social networks. It is not often the case that individuals are binary either friends of enemies, but rather a more nuanced relationships exists which can be modeled by some scalar quantity describing the like-ability between two individuals. Furthermore, the paper explores only datasets where the positive/negative aspect of an edge can be directly measured, rather than inferred (up-vote vs down-vote of a user). Instead, it would be interesting to see if the methods presented can generalize to help make predictions in networks where the information is implicit in the interactions between users. Lastly, the paper focuses only on direct evaluations of users, and does not extend the work to the ``recommendation'' setting where users are evaluating inert objects.
+
+\subsubsection{Brainstorming}
+
+The introduction of the ``edge sign'' is useful to consider in the case of Yelp reviews, since intuitively speaking, we can interpret the number of stars a particular reviewer gives as how positive or negative her perception of the business is. Furthermore, we can generalize the social ideas of ``friend of a friend is my friend'' et al. to a review setting by considering that businesses I review positively will tend to be reviewed positively by other users whom have also positively reviewed other businesses I've reviewed (we collapse the bipartite review graph into a graph where $u,v$ is an edge if users $u$ and $v$ have both reviewed the same business, with the sign of the edge $+$ if the reviewers agree and $-$ if they disagree).
+
+\subsection{Link Prediction using Supervised Learning}
+Hasan et. al in \cite{Hasan06linkprediction} introduce the very important idea of using features of the node to assist in link prediction. The paper also significantly expands on the set of possible models to use for ML, demonstrating that for their data, SVMs work the best when it comes to predicting the edge. They formulate their problem as a supervised machine learning problem. Formally, we take two snapshots of a network at different times $t$ and $t'$ where $t' > t$. The training set of generated by choosing pairs of nodes $(u,v)$ which are not connected by an edge in $G_t$, and labeling as positive if they are connected in $G_{t'}$ and negative if they are not connected in $G_{t'}$. The task then becomes a classification problem to predict whether the edges $(u,v)$ is positive or negative. 
+
+\subsubsection{Summary}
+In particular, the paper makes use of the following features:
+
+\begin{itemize}
+\item Proximity features - computed from the similarity between nodes.
+\item Aggregated features - how "prolific" a scientists is, or other features that belong to each node.
+\item Network topology features - (1) shortest distance among pairs of nodes, (2) number of common neighbors, (3) Jaccard's coefficient, etc.
+\end{itemize}
+
+The paper rigorously describes the sets of features it found the most predictive, and takes into account node-level information extractable from the network as well as some amount of ``meta''-level information (for example, how similar two nodes are to each other). The results demonstrate great success (with accuracies up to 90\% compared to a baseline of 50\% or so). Overall, the paper presents a novel approach of using machine learning to assist in the link prediction problem by rephrasing the problem as a supervised learning task.
+
+\subsubsection{Critique}
+The paper reformulates the problem of link prediction into a supervised machine learning problem, which is particularly helpful given the great advances in machine learning. However, this reformulation is still based almost entirely on the idea of feature extraction, and while some meta-information about each item is utilized, it does not appear to be effectively combined with the topological information about each node. Furthermore, it is an extremely difficult problem to hand-pick the correct set of features to explore.
+
+\subsubsection{Brainstorming}
+The paper is a good addition to our repertoire since it allows us to consider the rating prediction problem as a supervised machine learning problem. This can be useful since it will allow us to merge node-level meta-information with aggregate topological network-level information into relatively complex ML models.
+
+\section{Project Proposal}
+The aim of our project is to predict user ratings (number of stars) of Yelp businesses based on both network structure and user/business information available in the Yelp dataset. In the following sections, we introduce the dataset we plan to use, the methods we expect to implement, and how we will evaluate our results. We note that network-level information has not been previously utilized, though work does exist looking at predicting ratings based on the text of the review and NLP models \cite{PredictionYelpReviewStarRatingUsingSentimentAnalysis}.
+
+\subsection{The dataset}
+Our dataset is relatively set of information provided by Yelp (for the purposes of the Yelp Challenge) consisting of:
+\begin{itemize}
+\item \textbf{Businesses}: Consists of 156K businesses. It contains data about businesses on Yelp including geographical location, attributes, and categories.
+\item \textbf{Reviews}: 4.7M reviews. It contains full review text (for NLP processing) as well as the user id that wrote the review and the business id the review is written for. It also contains the number of stars given, as well as the number of useful, funny, and cool up-votes (finally, it also contains the date).
+\item \textbf{Users}: 1.1M Yelp User data. It includes the user's friend mapping and all the metadata associated with the user.
+\item \textbf{Tips}: 1M tips. Tips written by a user on a business (similar to reviews). Tips are shorter than reviews and tend to convey quick suggestions.
+\item \textbf{Photos:} 200K Photos, each associated with businesses. The photos are also associated with captions.
+\item \textbf{Checkins:} Checkins on a business.
+\end{itemize}
+
+As we can see from above, the dataset is relatively rich, with many possible graph structures to study on top of it. In general, given that we are trying to predict review ratings, we will focus on the following bipartite graph with users and businesses:
+
+\begin{figure}
+\centering
+\includegraphics[width=0.5\textwidth]{graph_structure/graph_structure}
+\caption{Proposed Graph Models Based on Users, Reviews, and Businesses}
+\label{fig:graph_structure}
+\end{figure}
+
+\subsection{The problem}
+The rich meta-data about the network makes it quite interested to analyze, and opens up a lot of venues for possible improvements in terms of link prediction. Although we only have a bipartite network for a graph, we also have the raw text of the Yelp Review as well as geographical information about the business and photos for some businesses, which opens the possibility of using moderns visual image recognition and natural language processing techniques to further extract node-level meta-data to incorporate into our model.
+
+Concretely, we will focus our work on predicting the rating that a user will assign a particular business. This problem has immediate and obvious utility: it would be useful to help users discover new businesses to visit (if the predicted rating is high) and also help business determine positive and negative trends. The dataset can be broken into three sets so we can train, evaluate, and test our models. One set will have edges, reviews, and information for businesses for a certain time $[t_0, t_1)$, the second set will have the edges created from $[t_1, t_2)$ and will be used to cross-validate our models and tune hyper-parameters, and the third set will he a hold out containing edges from $[t_2, t_3)$ and will be used for testing only.
+
+\subsection{Methodology}
+Based on the readings presented in our reaction paper, we will try a supervised learning model approach which will make use of both network-level features as well as node metadata. Let $G = (V,E)$ be our entire network spanning from $[t_0, t_3]$. We will create $G_i = (V_i, E_i)$ for $0 \leq i \leq 2$ for each of the intervals mentioned above $[t_i, t_{i+1})$.
+
+We will extract the following set of topological network features, based on the literature:
+\begin{itemize}
+\item Afar-Adamic distance \cite{Adamic01friendsand}.
+\item Following \cite{5562752}, we will augment information using the bipartite structure of the graph.
+\item We will collapse the graph to generate positive and negative edges based on user-user interactions and extract user-level features that were helpful in predicting positive/negative edges in previous examples.
+\item We will extract other topological features mentioned above.
+\end{itemize}
+
+We will also make use of the rich meta-data provided for each node as follows:
+\begin{itemize}
+\item Simple user features such as: (1) number of hot compliments received by the user, (2) number of more compliments received by the user, (3) number of profile compliments received by the user, (4) number of cute compliments received by the user, (5) number of list compliments received by the user (6) number of note compliments received by the user, (7) number of plain compliments received by the user, (8) number of cool compliments received by the user, (9) number of funny compliments received by the user, (10) number of writer compliments received by the user, and (11) number of photo compliments received by the user.
+\item Other metrics for the user found in the Yelp Dataset.
+\item Business metrics such as it's category, whether it is open or not, and it's postal code.
+\item We will concatenate reviews by the same user and use these as an input feature to an RNN for language extraction.
+\item Similarly, we can concatenate reviews of business and use these for features relating to the business nodes.
+\item We will use photos (when available) as input features for the businesses by using transfer learning to transfer some.
+\item There is additional data associate with each node which we can use and extract.
+\end{itemize}
+
+\subsection{Model Assessment}
+
+We will use similar metrics as presented in the literature with a slight modification. For example, we will make use of the Area under the ROC Curve. The area under the curve has the interpretation as the probability that a randomly chosen future edge in the test graph (the edges we are predicting) is given a higher score than a randomly chosen non-existent edge. Mathematically, let $I_{H_i}$ be an indicator r.v for the event $H_i$ that the $i$-th comparison between a randomly chosen link and missing link is such that the score assigned to the non-missing link is higher than the score assigned to the missing link by our model and similarly $E_i$ the even that the score assignment is the same. Then we have:
+$$
+Area = \frac{\sum_{i=1}^n I_{H_i} + 0.5 \sum_{i=1}^n I_{E_i}}{n}
+$$
+
+We will also look at our predictions and compute the precision, recall, and F-1 scores for the positive examples (edges that do exist). We expect the graph to be extremely sparse, so this will get around that issue.
+
+Finally, we will look at our categorical predictions (1 star, 2 star, 3 star, 4 star, 5 star) and measure the RMSE from the true rating for the edges that are present.
+
+\subsection{Challenges}
+
+Below we present a list of possible challenges we expect:
+
+\begin{itemize}
+\item The dataset is relatively large, containing 4.7M reviews of 156K businesses. It might make sense to work on a subset of the data first and the proceed to train our models on the whole data-set if we have high confidence in their effectiveness.
+\item Many of the features we expect to analyze are text-based, such as the ``sentimentality'' of a review or review similarity based on the text itself. 
+\item The data set contains a high-amount of information per item, which can easily lead to an exponential growth in the amount of data we process. We can mitigate this by making sure we constrain our problem sufficiently as to drop any item properties which are non-predictive in nature or which we find redundant.
+\end{itemize}
+
+\bibliography{references}{}
+\bibliographystyle{plain}
+
+\end{document}
