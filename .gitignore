@@ -367,3 +367,6 @@ TSWLatexianTemp*
 
 # Do not ignore these pdfs!
 !hw[0-9]/hw[0-9].pdf
+
+# Hide the data folder.
+yelp_data/*
