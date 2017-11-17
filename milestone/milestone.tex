@@ -24,6 +24,7 @@
 %\usepackage{amsmath} % assumes amsmath package installed
 %\usepackage{amssymb}  % assumes amsmath package installed
 \usepackage{cite}
+\usepackage{tikz}
 
 \title{\LARGE \bf
 Predicting Yelp Star Reviews Based on Network Structure with Deep Learning}
@@ -158,36 +159,116 @@ In particular,they make use of the following features:
 
 The authors rigorously describes the sets of features it found the most predictive, and takes into account node-level information extractable from the network as well as some amount of ``meta''-level information (for example, how similar two nodes are to each other). The results demonstrate great success (with accuracies up to 90\% compared to a baseline of 50\% or so). Overall, The authors presents a novel approach of using machine learning to assist in the link prediction problem by rephrasing the problem as a supervised learning task.
 
-\section{Methods}
+\section{Methodology and Data}
 In this section, we describe the architecture of our feature extraction networks as well as lay the ground work for our predictive models. We define our loss function and presents some additional details used for training, such as learning rate and other hyper-parameters.
 
+We convert the original data from json format to csv. The data set contains 156,639 businesses (with 101 distinct attributes), 196,278 photos (associated with businesses), 1,028,802 tips (these are between users and businesses), 135,148 checkins (again, associated with each business), and TODO users ().
+
 \subsection{Dataset}
-Our dataset is the set released for the Yelp Data Set Challange in 2017. The entirety of the dataset consits of the following entities:
+Our dataset is the set released for the Yelp Data Set Challange Round 10 \cite{YelpDataSet} in 2017. The entirety of the dataset consits of the following entities:
 \begin{itemize}
-\item \textbf{Businesses}: Consists of 156K businesses. It contains data about businesses on Yelp including geographical location, attributes, and categories.
-\item \textbf{Reviews}: 4.7M reviews. It contains full review text (for NLP processing) as well as the user id that wrote the review and the business id the review is written for. It also contains the number of stars given, as well as the number of useful, funny, and cool up-votes (finally, it also contains the date).
-\item \textbf{Users}: 1.1M Yelp User data. It includes the user's friend mapping and all the metadata associated with the user.
-\item \textbf{Tips}: 1M tips. Tips written by a user on a business (similar to reviews). Tips are shorter than reviews and tend to convey quick suggestions.
-\item \textbf{Photos:} 200K Photos, each associated with businesses. The photos are also associated with captions.
-\item \textbf{Checkins:} Checkins on a business.
+\item \textbf{Businesses}: Consists of exaclty 156,639 businesses. It contains data about businesses on Yelp including geographical location, attributes, and categories.
+\item \textbf{Reviews}: 4,736,897 reviews. It contains full review text (for NLP processing) as well as the user id that wrote the review and the business id the review is written for. It also contains the number of stars given, as well as the number of useful, funny, and cool up-votes (finally, it also contains the date).
+\item \textbf{Users}: 1,183,362 Yelp users. It includes the user's friend mapping and all the metadata associated with the user. Just this single dataset consists contains 538,440,966 edges.
+\item \textbf{Tips}: 1,028,802 tips. Tips are associated with each business and are written by users. Tips are similar to reviews, but without rating and usually much shorter.
+\item \textbf{Photos:} 196,278 Photos, each associated with businesses. The photos are also associated with captions.
+\item \textbf{Checkins:} 135,148 checkins on a business (this a business only attribute).
 \end{itemize}
 
 As we can see from above, the dataset is relatively rich, with many possible graph structures to study on top of it. In general, given that we are trying to predict review ratings, we focus on the following bipartite graph with users and businesses:
 
-\begin{figure}
+\begin{figure}[h!]
 \centering
 \includegraphics[width=0.5\textwidth]{../shared/graph_structure/graph_structure}
 \caption{Proposed Graph Models Based on Users, Reviews, and Businesses}
 \label{fig:graph_structure}
 \end{figure}
 
-\subsection{The problem}
-The rich meta-data about the network makes it quite interested to analyze, and opens up a lot of venues for possible improvements in terms of link prediction. Although we only have a bipartite network for a graph, we also have the raw text of the Yelp Review as well as geographical information about the business and photos for some businesses, which opens the possibility of using moderns visual image recognition and natural language processing techniques to further extract node-level meta-data to incorporate into our model.
+and further propose making use of the friend-friend explicit graph (it is possible that it might be meaningful to see if we can find any relationship between friend reviews and user reviews) and the tip edges (without ratings, but possible meaningful information about a business). With this additional information, the structure of the graph itself becomes increasingly complex, as shown in Diagram \ref{fig:graph_complex_structure}.
+
+\begin{figure}[h!]
+\centering
+\begin{tikzpicture}[scale=0.2]
+\tikzstyle{every node}+=[inner sep=0pt]
+\draw [black] (28.4,-27.4) circle (3);
+\draw (28.4,-27.4) node {$1$};
+\draw [black] (30.9,-16.9) circle (3);
+\draw (30.9,-16.9) node {$2$};
+\draw [black] (20.3,-19.9) circle (3);
+\draw (20.3,-19.9) node {$3$};
+\draw [black] (21.9,-36.9) circle (3);
+\draw (21.9,-36.9) node {$4$};
+\draw [black] (44.1,-8.1) circle (3);
+\draw (44.1,-8.1) node {$1$};
+\draw [black] (44.1,-8.1) circle (2.4);
+\draw [black] (44.1,-18.7) circle (3);
+\draw (44.1,-18.7) node {$2$};
+\draw [black] (44.1,-18.7) circle (2.4);
+\draw [black] (44.1,-27.4) circle (3);
+\draw (44.1,-27.4) node {$3$};
+\draw [black] (44.1,-27.4) circle (2.4);
+\draw [black] (44.1,-35.9) circle (3);
+\draw (44.1,-35.9) node {$4$};
+\draw [black] (44.1,-35.9) circle (2.4);
+\draw [black] (44.1,-43.8) circle (3);
+\draw (44.1,-43.8) node {$5$};
+\draw [black] (44.1,-43.8) circle (2.4);
+\draw [black] (33.4,-15.24) -- (41.6,-9.76);
+\fill [black] (41.6,-9.76) -- (40.66,-9.79) -- (41.22,-10.62);
+\draw (41.47,-13) node [below] {$5\mbox{ }review$};
+\draw [black] (33.25,-18.77) -- (41.75,-25.53);
+\fill [black] (41.75,-25.53) -- (41.44,-24.64) -- (40.81,-25.43);
+\draw (35.94,-22.64) node [below] {$tip$};
+\draw [black] (30.21,-19.82) -- (29.09,-24.48);
+\fill [black] (29.09,-24.48) -- (29.77,-23.82) -- (28.79,-23.59);
+\draw [black] (29.09,-24.48) -- (30.21,-19.82);
+\fill [black] (30.21,-19.82) -- (29.53,-20.48) -- (30.51,-20.71);
+\draw [black] (22.5,-21.94) -- (26.2,-25.36);
+\fill [black] (26.2,-25.36) -- (25.95,-24.45) -- (25.27,-25.19);
+\draw [black] (26.2,-25.36) -- (22.5,-21.94);
+\fill [black] (22.5,-21.94) -- (22.75,-22.85) -- (23.43,-22.11);
+\draw [black] (26.71,-29.88) -- (23.59,-34.42);
+\fill [black] (23.59,-34.42) -- (24.46,-34.05) -- (23.63,-33.48);
+\draw [black] (23.59,-34.42) -- (26.71,-29.88);
+\fill [black] (26.71,-29.88) -- (25.84,-30.25) -- (26.67,-30.82);
+\draw [black] (21.62,-33.91) -- (20.58,-22.89);
+\fill [black] (20.58,-22.89) -- (20.16,-23.73) -- (21.15,-23.64);
+\draw [black] (20.58,-22.89) -- (21.62,-33.91);
+\fill [black] (21.62,-33.91) -- (22.04,-33.07) -- (21.05,-33.16);
+\draw [black] (33.154,-18.866) arc (41.17132:-89.62681:11.106);
+\fill [black] (24.87,-37.28) -- (25.67,-37.78) -- (25.66,-36.78);
+\draw [black] (33.153,-18.867) arc (41.13512:-89.59061:11.108);
+\fill [black] (24.87,-37.28) -- (25.67,-37.78) -- (25.66,-36.78);
+\draw [black] (33.101,-18.926) arc (39.66688:-88.12237:11.16);
+\fill [black] (33.1,-18.93) -- (33.23,-19.86) -- (34,-19.22);
+\draw [black] (31.02,-25.95) -- (41.48,-20.15);
+\fill [black] (41.48,-20.15) -- (40.53,-20.1) -- (41.02,-20.98);
+\draw (37.8,-23.55) node [below] {$tip$};
+\draw [black] (20.708,-16.933) arc (166.48658:66.25769:15.116);
+\fill [black] (41.49,-6.63) -- (40.96,-5.85) -- (40.56,-6.76);
+\draw (27.15,-6.41) node [above] {$tip$};
+\draw [black] (24.9,-36.77) -- (41.1,-36.03);
+\fill [black] (41.1,-36.03) -- (40.28,-35.57) -- (40.33,-36.57);
+\draw [black] (24.76,-37.79) -- (41.24,-42.91);
+\fill [black] (41.24,-42.91) -- (40.62,-42.19) -- (40.32,-43.15);
+\draw (34.33,-39.78) node [above] {$tip$};
+\draw [black] (24.66,-35.72) -- (41.34,-28.58);
+\fill [black] (41.34,-28.58) -- (40.41,-28.44) -- (40.8,-29.35);
+\draw (36.85,-32.7) node [below] {$4\mbox{ }review$};
+\end{tikzpicture}
+\caption{Proposed Complex Graph Models Based on Users, Reviews, Businesses, User-User Interactions, and Tips}
+\label{fig:graph_complex_structure}
+\end{figure}
+
+\subsection{Predictive Models}
+The rich meta-data about the network makes it quite interested to analyze, and opens up a lot of venues for possible improvements in terms of link prediction. We have multiple networks available for explorations, including \textit{user-user} network (based on friendships, comments, etc.), \textit{user-business} network, based on reviews given by a specific business to a user.
+
+Furthermore, we also have the raw text of the Yelp Review as well as geographical information about the business and photos for some businesses, which opens the possibility of using moderns visual image recognition and natural language processing techniques to further extract node-level meta-data to incorporate into our model.
 
 Concretely, we focus our work on predicting the rating that a user will assign a particular business. This problem has immediate and obvious utility: it would be useful to help users discover new businesses to visit (if the predicted rating is high) and also help business determine positive and negative trends. The dataset can be broken into three sets so we can train, evaluate, and test our models. One set will have edges, reviews, and information for businesses for a certain time $[t_0, t_1)$, the second set will have the edges created from $[t_1, t_2)$ and will be used to cross-validate our models and tune hyper-parameters, and the third set will he a hold out containing edges from $[t_2, t_3)$ and will be used for testing only.
 
-\subsection{Methodology}
-Based on the readings presented in our reaction paper, we try a supervised learning model approach which will make use of both network-level features as well as node metadata. Let $G = (V,E)$ be our entire network spanning from $[t_0, t_3]$. We create $G_i = (V_i, E_i)$ for $0 \leq i \leq 2$ for each of the intervals mentioned above $[t_i, t_{i+1})$.
+\subsection{Network Structure}
+Based on on previous work, we try a supervised learning model approach which will make use of both network-level features as well as node metadata. Let $G = (V,E)$ be our entire network spanning from $[t_0, t_3]$. We create $G_i = (V_i, E_i)$ for $0 \leq i \leq 2$ for each of the intervals mentioned above $[t_i, t_{i+1})$.
 
 We extract the following set of topological network features, based on the literature:
 \begin{itemize}
@@ -199,35 +280,83 @@ We extract the following set of topological network features, based on the liter
 
 We also make use of the rich meta-data provided for each node as follows:
 \begin{itemize}
-\item Simple user features such as: (1) number of hot compliments received by the user, (2) number of more compliments received by the user, (3) number of profile compliments received by the user, (4) number of cute compliments received by the user, (5) number of list compliments received by the user (6) number of note compliments received by the user, (7) number of plain compliments received by the user, (8) number of cool compliments received by the user, (9) number of funny compliments received by the user, (10) number of writer compliments received by the user, and (11) number of photo compliments received by the user.
+\item Simple user features such as the number of hot compliments.
 \item Other metrics for the user found in the Yelp Dataset.
-\item Business metrics such as it's category, whether it is open or not, and it's postal code.
+\item Business metrics such as its category, whether it is open or not, and its postal code.
 \item We concatenate reviews by the same user and use these as an input feature to an RNN for language extraction.
 \item Similarly, we can concatenate reviews of business and use these for features relating to the business nodes.
 \item We use photos (when available) as input features for the businesses by using transfer learning to transfer some.
 \item There is additional data associate with each node which we can use and extract.
 \end{itemize}
 
-\subsection{Model Assessment}
+\section{Results and Discussion}
+In this section, we present the results of our models.
 
-We will use similar metrics as presented in the literature with a slight modification. For example, we will make use of the Area under the ROC Curve. The area under the curve has the interpretation as the probability that a randomly chosen future edge in the test graph (the edges we are predicting) is given a higher score than a randomly chosen non-existent edge. Mathematically, let $I_{H_i}$ be an indicator r.v for the event $H_i$ that the $i$-th comparison between a randomly chosen link and missing link is such that the score assigned to the non-missing link is higher than the score assigned to the missing link by our model and similarly $E_i$ the even that the score assignment is the same. Then we have:
-$$
-Area = \frac{\sum_{i=1}^n I_{H_i} + 0.5 \sum_{i=1}^n I_{E_i}}{n}
-$$
+\subsection{Summary Statistics}
+We present some analysis on our networks defined above. 
 
-We will also look at our predictions and compute the precision, recall, and F-1 scores for the positive examples (edges that do exist). We expect the graph to be extremely sparse, so this will get around that issue.
-
-Finally, we will look at our categorical predictions (1 star, 2 star, 3 star, 4 star, 5 star) and measure the RMSE from the true rating for the edges that are present.
-
-\subsection{Challenges}
-
-Below we present a list of possible challenges we expect:
+\subsubsection{Users}
+We present some overview of the user metadata. In Figure \ref{fig:user_characteristics}, we can see that multiple characteristics of the users follow a power-law degree distributions -- and not just the node degrees. This is to say that the distribution can be modelled as $P(k) \propto k^{-\gamma}$The power-law distribution is immediate evident in:
 
 \begin{itemize}
-\item The dataset is relatively large, containing 4.7M reviews of 156K businesses. It might make sense to work on a subset of the data first and the proceed to train our models on the whole data-set if we have high confidence in their effectiveness.
-\item Many of the features we expect to analyze are text-based, such as the ``sentimentality'' of a review or review similarity based on the text itself. 
-\item The data set contains a high-amount of information per item, which can easily lead to an exponential growth in the amount of data we process. We can mitigate this by making sure we constrain our problem sufficiently as to drop any item properties which are non-predictive in nature or which we find redundant.
-\end{itemize}
+\item Number of review -- we have a few users that write many rewiews and many users that write few reviews
+\item Number of friends -- this means the network follows a true-power law distribution.
+\item useful/funny/cool/fans -- this appears to demonstrate that social ranking/status also follows a power-law distribution in the Yelp social network. This trend is further demonstrated by Figure \ref{fig:user_compliment_distribution}.
+\end{itemize} 
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.5\textwidth]{../shared/figures/distribution_user_characteristics}
+\caption{Frequency of countable user charatersitics -- the majority exhibit a powerlaw distributions}
+\label{fig:user_characteristics}
+\end{figure}
+
+Furthermore, we can look at the averate rating given by users, across the network. The results are shown in a log plot in Figure \ref{fig:user_rating_distribution}.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.5\textwidth]{../shared/figures/average_user_rating_distribution}
+\caption{Distribution of Average user Rating}
+\label{fig:user_rating_distribution}
+\end{figure}
+
+We notice that the ratings tend to be inflated (3-5) stars being quite frequent, while 1-2 stars being very infrequent. Presumable this might be due to the fact that people do not frequent poor restaurants. The other aspect that is immediately apparent is the spikes at even numbered ratings -- this is likely due to users who have rated only one once, of which we have many.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.5\textwidth]{../shared/figures/compliement_type_distribution}
+\caption{Distribution of Received user Compliments}
+\label{fig:user_compliment_distribution}
+\end{figure}
+
+\subsubsection{Businesses}
+We present some overview of the user metadata. In Figure \ref{fig:business_review_distribution}, we can see that the power-law distribution is also respected in the business side. Furthermore, we can also see that businesses tend to be rated quite highly, on average, with most businesses iether having in the range from 3-5 (see Figure \ref{fig:business_star_distribution}).
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.5\textwidth]{../shared/figures/business_review_count_distribution}
+\caption{Business Review Distribution}
+\label{fig:business_review_distribution}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.5\textwidth]{../shared/figures/business_star_distribution}
+\caption{Business Average Star Distribution}
+\label{fig:business_star_distribution}
+\end{figure}
+
+\subsection{Review Prediction}
+In this section, we will compare the different methods utilized for review prediction. The methods include but are not limited to those discussed in the methods section above. We have yet to attempt making predictions, as this is a work-in-progress section.
+
+We will likely evaluate the results using $RMSE$ between the predicted score and the actual score. So over our testing set $T$, we will calculate:
+$$
+RMSE = \sqrt{\frac{1}{|T|} \sum_{t \in T}(t - \hat{t})^2}
+$$
+
+\section{Future Work}
+
+In the final report, we will present the results from training our end-to-end prediction model making use of both metadata and network structure features. We have yet to train a model on the entire data set. We will be using pre-trained deep-networks, such as VGGNet16 (for parsing images) and word2vec for parsing the natural language in the reviews.
 
 \bibliography{../shared/references}{}
 \bibliographystyle{plain}
