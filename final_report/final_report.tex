@@ -2,7 +2,7 @@
 %2345678901234567890123456789012345678901234567890123456789012345678901234567890
 %        1         2         3         4         5         6         7         8
 
-\documentclass[letterpaper, 11 pt, conference]{ieeeconf}  % Comment this line out
+\documentclass[letterpaper, 10 pt, conference]{ieeeconf}  % Comment this line out
                                                           % if you need a4paper
 %\documentclass[a4paper, 10pt, conference]{ieeeconf}      % Use this line for a4
                                                           % paper
@@ -63,11 +63,11 @@ Predicting Yelp Star Reviews Based on Network Structure with Deep Learning}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{abstract}
 
-In this paper, we tackle the real-world problem of predicting Yelp star-review rating based on business features (such as images, descriptions), user features (average previous ratings), and, of particular interest, network properties (which businesses has a user rated before).
+In this paper, we tackle the real-world problem of predicting Yelp star-review rating based on business features (such as images, descriptions), user features (average previous ratings), and, of particular interest, network properties (which businesses has a user rated before). We compare multiple models on different sets of features -- from simple linear regression on network features only to deep learning models on network and item features.
 
-In recent years, breakthroughs in deep learning have led to increased accuracy in commong supervised learning tasks, such as image classification, captioning, and language understanding. However, the idea of combining deep learning with network feature and structure appears to be novel. While the problem of predicting future interactions in a network has been studied at length, these approaches have often ignored either node-specific data or global structure \cite{PintrestProject}.
+In recent years, breakthroughs in deep learning have led to increased accuracy in common supervised learning tasks, such as image classification, captioning, and language understanding. However, the idea of combining deep learning with network feature and structure appears to be novel. While the problem of predicting future interactions in a network has been studied at length, these approaches have often ignored either node-specific data or global structure \cite{PintrestProject}.
 
-We demonstrate that taking a mixed approach combining both node-level features and network information can effectively be used to predict Yelp-review star ratings. We evaluate on the Yelp dataset by splitting our data along the time dimension (as would naturally occur in the real-world) and comparing our model against multiple baseline models from literature.
+We demonstrate that taking a mixed approach combining both node-level features and network information can effectively be used to predict Yelp-review star ratings. We evaluate on the Yelp dataset by splitting our data along the time dimension (as would naturally occur in the real-world) and comparing our model against others which do no take advantage of the network structure and/or deep learning.
 
 \end{abstract}
 
@@ -76,33 +76,29 @@ We demonstrate that taking a mixed approach combining both node-level features a
 \section{Introduction}
 The problem of predicting network structure can be both of great practical importance as well as a case-study in understanding the usefulness of deep learning in network settings. An accurate model can be used to suggest friend recommendations, product recommendations, and even predict individual user actions. A system which solves this problem is generally referred to in the literature as a recommender system, and such systems are quite common at large Internet companies such as Amazon \cite{Linden:2003:ARI:642462.642471}, Netflix \cite{Zhou:2008:LPC:1424237.1424269}, and Google.
 
-The main approaches typically taken fall into two caregories - \textit{content based} and \textit{collaborative filtering} approaches. The first makes use of text, meta-data, and other feautres in order to identify potentially related items, which the later leans more towards making use fo aggregated behavior and of a large number of training samples (ie, user and business). Collaborative filtering approaches have proven useful in recommender systems in industry, and are typically the preferred method due to how expensive it typically is (in both computational resources and engineering effort) to extract useful feautres from large amounts of metadata. However, with advances in deep learning (extracting features from videos and text that are useful for many tasks), it seems feasible that revisiting content-based approaches with additionall network-level data will prove fruitful.
+The main approaches typically taken fall into two categories - \textit{content based} and \textit{collaborative filtering} approaches. The first makes use of text, meta-data, and other features in order to identify potentially related items, while the latter leans more towards making use of aggregated behavior and of a large number of training samples (ie, users and businesses). Collaborative filtering approaches have proven useful in recommender systems in industry, and are typically the preferred method due to how expensive it typically is (in both computational resources and engineering effort) to extract useful features from large amounts of meta-data. However, with advances in deep learning (extracting features from videos and text that are useful for many tasks), it seems feasible that revisiting content-based approaches with additional network-level data will prove fruitful.
 
 In this paper, we seek to explore a novel method combining both deep learning feature extraction (a \textit{content-based} approach) with network prediction models (a quasi-\textit{collaborative filtering} approach). We focus on a real-world, practical network - the Yelp Review Network. The network consists of 4.7M review (edges), 156K businesses, 200K pictures, covering over 12 metropolitan areas in the united state.
 
 Specifically, we seek to model the problem of predicting a user's star rating of a previously unrated business by using features about the business, the user, as well as existing interactions between the user and other businesses.
 
-From a general view point, we hypothesise that the final star rating given by a users is a mixture of all of the above interactions. In particular, we would expect that rating at time $t$ between user $i$ and business $j$ could be modelled as:
+From a general view point, we hypothesize that the final star rating given by a users is a mixture of all of the above interactions. In particular, we would expect that rating at time $t$ between user $i$ and business $j$ could be modeled as:
 $$
 r_t = f(i_t, j_t, \delta_{i,j,t}) + \mathcal{N}(0,\epsilon_{i,j,t})
 $$
 
-Here, we have $i_t$ is the overall user-based bias at time $t$. For example, some users simply tend to give higher or lower ratings based on previous experience -- one could argue this is inherent to their personalities. We also have $j_t$, the overall business bias at time $t$. For example, some business are objectively better across the board, by having better food, websites, or being at better locations. Finally, the term $\delta_{i,j,t}$ which is an interaction term reflecting the interaction between this user and the business as time $t$. One might imagine for example that a user who really enjoys mexican food will tend to give those restaurants a higher rating.
+Here, we have $i_t$ is the overall user-based bias at time $t$. For example, some users simply tend to give higher or lower ratings based on previous experience -- one could argue this is inherent to the user directly. We also have $j_t$, the overall business bias at time $t$. For example, some business are objectively better across the board, by having better food, websites, or being at better locations. Finally, the term $\delta_{i,j,t}$ which is an interaction term reflecting the interaction between this user and the business as time $t$. One might imagine for example that a user who really enjoys Mexican food will tend to give those restaurants a higher rating.
 
 In the end, these three terms should be combined in some way (with normalization, etc.) to arrive at a final rating. As such, we essentially have four models which can be combined to give better predictive power:
 
 \begin{itemize}
 \item a user model, trained only on user properties
 \item a business model, trained on business properties
-\item interaction model trained on a mixture of both properties with addtional features known only to the network (such as previous business interactions, etc).
+\item interaction model trained on a mixture of both properties with additional features known only to the network (such as previous business interactions, etc).
 \end{itemize}
 
-For each of the models above, we have a different set of data. Given the recent developments in deep learning, we be using the work of others to get started. Overall, we plan to make use of both recent architectures in RNNs and LSTM (such as Google's Inception model) as well as pretrained data. For example, we first make use of word2vec \cite{DBLP:journals/corr/abs-1301-3781} for any character data (such as review text, business descriptions, etc.). We make use of networks like VGGNet16 \cite{DBLP:journals/corr/SimonyanZ14a} and others for feature extraction from photos.
-
-Finally, we connect all of these models with a fully connect neural network capable of predicting the final star rating. In this paper, we present 
-
 \section{Related Work}
-In general, there are three areas of interest in the literature. We have (1) work which focuses and provides techniques for predicing results based on network structures, (2) work which has applied some ML techniques to the features extracted from networks (and sometimes elements themselves), and (3) work which throws away a lot of the network structure and focuses exclusively on using the data to make predictions. All of these are supervised learning methods which varying degrees of complexity. We provide a brief overview of them, followed by a section discussing the mathematical underpinnings of the models.
+In general, there are three areas of interest in the literature. We have (1) work which focuses and provides techniques for predicting results based on network structures, (2) work which has applied some ML techniques to the features extracted from networks (and sometimes elements themselves), and (3) work which throws away a lot of the network structure and focuses exclusively on using the data to make predictions. All of these are supervised learning methods which varying degrees of complexity. We provide a brief overview of them, followed by a section discussing the mathematical underpinnings of the models.
 
 \subsection{Graph-Based Approaches}
 
@@ -162,25 +158,71 @@ The authors rigorously describes the sets of features it found the most predicti
 \section{Methodology and Data}
 In this section, we describe the architecture of our feature extraction networks as well as lay the ground work for our predictive models. We define our loss function and presents some additional details used for training, such as learning rate and other hyper-parameters.
 
-We convert the original data from json format to csv. The data set contains 156,639 businesses (with 101 distinct attributes), 196,278 photos (associated with businesses), 1,028,802 tips (these are between users and businesses), 135,148 checkins (again, associated with each business), and TODO users ().
+We convert the original data from JSON format to CSV. The data set contains 156,639 businesses (with 101 distinct attributes), 196,278 photos (associated with businesses), 1,028,802 tips (these are between users and businesses), 135,148 check-ins (again, associated with each business), and 1,183,362 users.
 
 \subsection{Dataset}
-Our dataset is the set released for the Yelp Data Set Challange Round 10 \cite{YelpDataSet} in 2017. The entirety of the dataset consits of the following entities:
+Our dataset is the set released for the Yelp Data Set Challenge Round 10 \cite{YelpDataSet} in 2017. The entirety of the dataset consists of the following entities:
 \begin{itemize}
-\item \textbf{Businesses}: Consists of exaclty 156,639 businesses. It contains data about businesses on Yelp including geographical location, attributes, and categories.
+\item \textbf{Businesses}: Consists of exactly 156,639 businesses. It contains data about businesses on Yelp including geographical location, attributes, and categories.
 \item \textbf{Reviews}: 4,736,897 reviews. It contains full review text (for NLP processing) as well as the user id that wrote the review and the business id the review is written for. It also contains the number of stars given, as well as the number of useful, funny, and cool up-votes (finally, it also contains the date).
 \item \textbf{Users}: 1,183,362 Yelp users. It includes the user's friend mapping and all the metadata associated with the user. Just this single dataset consists contains 538,440,966 edges.
 \item \textbf{Tips}: 1,028,802 tips. Tips are associated with each business and are written by users. Tips are similar to reviews, but without rating and usually much shorter.
 \item \textbf{Photos:} 196,278 Photos, each associated with businesses. The photos are also associated with captions.
-\item \textbf{Checkins:} 135,148 checkins on a business (this a business only attribute).
+\item \textbf{Check-ins:} 135,148 check-ins on a business (this a business only attribute).
 \end{itemize}
 
 As we can see from above, the dataset is relatively rich, with many possible graph structures to study on top of it. In general, given that we are trying to predict review ratings, we focus on the following bipartite graph with users and businesses:
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=0.5\textwidth]{../shared/graph_structure/graph_structure}
-\caption{Proposed Graph Models Based on Users, Reviews, and Businesses}
+\begin{tikzpicture}[scale=0.2]
+\tikzstyle{every node}+=[inner sep=0pt]
+\draw [black] (21.9,-11.9) circle (3);
+\draw (21.9,-11.9) node {$1$};
+\draw [black] (21.9,-20.2) circle (3);
+\draw (21.9,-20.2) node {$2$};
+\draw [black] (21.9,-28.1) circle (3);
+\draw (21.9,-28.1) node {$3$};
+\draw [black] (21.9,-36.9) circle (3);
+\draw (21.9,-36.9) node {$4$};
+\draw [black] (44.1,-8.1) circle (3);
+\draw (44.1,-8.1) node {$1$};
+\draw [black] (44.1,-8.1) circle (2.4);
+\draw [black] (44.1,-18.7) circle (3);
+\draw (44.1,-18.7) node {$2$};
+\draw [black] (44.1,-18.7) circle (2.4);
+\draw [black] (44.1,-27.4) circle (3);
+\draw (44.1,-27.4) node {$3$};
+\draw [black] (44.1,-27.4) circle (2.4);
+\draw [black] (44.1,-35.9) circle (3);
+\draw (44.1,-35.9) node {$4$};
+\draw [black] (44.1,-35.9) circle (2.4);
+\draw [black] (44.1,-43.8) circle (3);
+\draw (44.1,-43.8) node {$5$};
+\draw [black] (44.1,-43.8) circle (2.4);
+\draw [black] (24.86,-11.39) -- (41.14,-8.61);
+\fill [black] (41.14,-8.61) -- (40.27,-8.25) -- (40.44,-9.23);
+\draw (34.64,-10.84) node [below] {$reviews$};
+\draw [black] (24.36,-13.62) -- (41.64,-25.68);
+\fill [black] (41.64,-25.68) -- (41.27,-24.81) -- (40.7,-25.63);
+\draw [black] (23.94,-14.1) -- (42.06,-33.7);
+\fill [black] (42.06,-33.7) -- (41.89,-32.77) -- (41.15,-33.45);
+\draw [black] (24.89,-20) -- (41.11,-18.9);
+\fill [black] (41.11,-18.9) -- (40.27,-18.46) -- (40.34,-19.46);
+\draw [black] (24.75,-21.13) -- (41.25,-26.47);
+\fill [black] (41.25,-26.47) -- (40.64,-25.75) -- (40.33,-26.7);
+\draw [black] (24.66,-35.72) -- (41.34,-28.58);
+\fill [black] (41.34,-28.58) -- (40.41,-28.44) -- (40.8,-29.35);
+\draw [black] (24.35,-29.83) -- (41.65,-42.07);
+\fill [black] (41.65,-42.07) -- (41.29,-41.2) -- (40.71,-42.01);
+\draw [black] (24.73,-29.09) -- (41.27,-34.91);
+\fill [black] (41.27,-34.91) -- (40.68,-34.17) -- (40.35,-35.11);
+\draw [black] (23.73,-34.52) -- (42.27,-10.48);
+\fill [black] (42.27,-10.48) -- (41.38,-10.8) -- (42.18,-11.41);
+\draw [black] (24.13,-26.09) -- (41.87,-10.11);
+\fill [black] (41.87,-10.11) -- (40.94,-10.27) -- (41.61,-11.01);
+\end{tikzpicture}
+\caption{Simplified graph model of user reviews of businesses. The graph is bipartite, with users and businesses connected by directed "review" edges.}
 \label{fig:graph_structure}
 \end{figure}
 
@@ -216,31 +258,34 @@ and further propose making use of the friend-friend explicit graph (it is possib
 \draw [black] (33.4,-15.24) -- (41.6,-9.76);
 \fill [black] (41.6,-9.76) -- (40.66,-9.79) -- (41.22,-10.62);
 \draw (41.47,-13) node [below] {$5\mbox{ }review$};
-\draw [black] (33.25,-18.77) -- (41.75,-25.53);
-\fill [black] (41.75,-25.53) -- (41.44,-24.64) -- (40.81,-25.43);
-\draw (35.94,-22.64) node [below] {$tip$};
+\draw [black] (41.115,-27.585) arc (-94.24841:-162.7529:11.037);
+\fill [black] (41.11,-27.58) -- (40.35,-27.03) -- (40.28,-28.02);
+\draw (33.5,-25.71) node [below] {$tip$};
 \draw [black] (30.21,-19.82) -- (29.09,-24.48);
 \fill [black] (29.09,-24.48) -- (29.77,-23.82) -- (28.79,-23.59);
+\draw (28.89,-21.73) node [left] {$friend$};
 \draw [black] (29.09,-24.48) -- (30.21,-19.82);
 \fill [black] (30.21,-19.82) -- (29.53,-20.48) -- (30.51,-20.71);
 \draw [black] (22.5,-21.94) -- (26.2,-25.36);
 \fill [black] (26.2,-25.36) -- (25.95,-24.45) -- (25.27,-25.19);
+\draw (21.45,-24.14) node [below] {$friend$};
 \draw [black] (26.2,-25.36) -- (22.5,-21.94);
 \fill [black] (22.5,-21.94) -- (22.75,-22.85) -- (23.43,-22.11);
 \draw [black] (26.71,-29.88) -- (23.59,-34.42);
 \fill [black] (23.59,-34.42) -- (24.46,-34.05) -- (23.63,-33.48);
+\draw (24.55,-30.8) node [left] {$friend$};
 \draw [black] (23.59,-34.42) -- (26.71,-29.88);
 \fill [black] (26.71,-29.88) -- (25.84,-30.25) -- (26.67,-30.82);
 \draw [black] (21.62,-33.91) -- (20.58,-22.89);
 \fill [black] (20.58,-22.89) -- (20.16,-23.73) -- (21.15,-23.64);
+\draw (21.73,-28.32) node [right] {$friend$};
 \draw [black] (20.58,-22.89) -- (21.62,-33.91);
 \fill [black] (21.62,-33.91) -- (22.04,-33.07) -- (21.05,-33.16);
-\draw [black] (33.154,-18.866) arc (41.17132:-89.62681:11.106);
-\fill [black] (24.87,-37.28) -- (25.67,-37.78) -- (25.66,-36.78);
-\draw [black] (33.153,-18.867) arc (41.13512:-89.59061:11.108);
-\fill [black] (24.87,-37.28) -- (25.67,-37.78) -- (25.66,-36.78);
-\draw [black] (33.101,-18.926) arc (39.66688:-88.12237:11.16);
-\fill [black] (33.1,-18.93) -- (33.23,-19.86) -- (34,-19.22);
+\draw [black] (18.908,-36.812) arc (-98.51807:-309.93742:12.583);
+\fill [black] (18.91,-36.81) -- (18.19,-36.2) -- (18.04,-37.19);
+\draw (8.57,-18.2) node [left] {$friend$};
+\draw [black] (18.908,-36.811) arc (-98.5328:-309.92269:12.582);
+\fill [black] (28.85,-14.72) -- (28.56,-13.82) -- (27.92,-14.59);
 \draw [black] (31.02,-25.95) -- (41.48,-20.15);
 \fill [black] (41.48,-20.15) -- (40.53,-20.1) -- (41.02,-20.98);
 \draw (37.8,-23.55) node [below] {$tip$};
@@ -267,39 +312,75 @@ Furthermore, we also have the raw text of the Yelp Review as well as geographica
 
 Concretely, we focus our work on predicting the rating that a user will assign a particular business. This problem has immediate and obvious utility: it would be useful to help users discover new businesses to visit (if the predicted rating is high) and also help business determine positive and negative trends. The dataset can be broken into three sets so we can train, evaluate, and test our models. One set will have edges, reviews, and information for businesses for a certain time $[t_0, t_1)$, the second set will have the edges created from $[t_1, t_2)$ and will be used to cross-validate our models and tune hyper-parameters, and the third set will he a hold out containing edges from $[t_2, t_3)$ and will be used for testing only.
 
-\subsection{Network Structure}
-Based on on previous work, we try a supervised learning model approach which will make use of both network-level features as well as node metadata. Let $G = (V,E)$ be our entire network spanning from $[t_0, t_3]$. We create $G_i = (V_i, E_i)$ for $0 \leq i \leq 2$ for each of the intervals mentioned above $[t_i, t_{i+1})$.
+\subsection{Network-Only Predictor}
+We first present a predictive model which focus ``only'' on the structure of the graph, and uses this information to predict the ratings. For this purposes, we focus on the smaller user/business graph as shown in Figure \ref{fig:graph_structure}. We therefore have an undirected, weighed graph. In later sections, we explore alternative representations as well as additional data which can be input to our learning models.
 
-We extract the following set of topological network features, based on the literature:
+
+\subsubsection{Data Preprocessing}
+Given this representation $G$, we define three sets - training, validation, and test. We split the graph naturally -- edges and nodes are added to the graph as time progresses. However, we make special care to only use the nodes which remained and were available in the graph for the extent of our study. We can see the distribution of the reviews (edges) in our graph over time in Figure \ref{fig:reviews_over_time}. Given the skewed nature of the graph, we subset it to include only the latest reviews. Let us consider $G, G_{train}, G_{val}$ and $G_{test}$ where $G = G_{train} \cup G_{val} \cup G_{test}$. We first perform the following to obtain $G$:
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.5\textwidth]{../shared/figures/distribution_of_reviews_over_time}
+\caption{Number of reviews in original dataset as a measure of time. We can see readily that the number of reviews increases drastically in the later years.}
+\label{fig:reviews_over_time}
+\end{figure}
+
 \begin{itemize}
-\item Afar-Adamic distance \cite{Adamic01friendsand}.
-\item Following \cite{5562752}, we augment information using the bipartite structure of the graph.
-\item We collapse the graph to generate positive and negative edges based on user-user interactions and extract user-level features that were helpful in predicting positive/negative edges in previous examples.
-\item We extract other topological features mentioned above.
+\item Remove all reviews before ``2016-08-24''. This is primarily to (1) remove bias from early users and reviewers and instead focus on later reviews (see Figure \ref{fig:reviews_subset_over_time} for the distribution over time, which is far more uniform) and (2) reduce the size of our graphs to a manageable data set. We then have a graph with 428,795 users, 107,138 businesses, and 1,000,277 edges. We therefore have an extremely sparse graph, as only 0.0103109977941166\% of all possible edges even exist.
 \end{itemize}
 
-We also make use of the rich meta-data provided for each node as follows:
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.5\textwidth]{../shared/figures/distribution_of_reviews_subset_over_time}
+\caption{Number of reviews by date for $G$}
+\label{fig:reviews_subset_over_time}
+\end{figure}
+
+We now proceed to split the graph into $G_{train}, G_{test}$ and $G_{val}$. We split time-wise using three split-points, $t_0, t_1,$ and $t_2$. Then we have $G_{train}$ as the subset of $G$ from $[t_0, t_1)$ and $G_{val}$ as the subset in $[t_1, t_2)$ with $G_{test}$ containing the subset to the latest date $[t_2, \infty)$. Furthermore, we set all nodes in $G_{val}$ and $G_{test}$ to be the same set as those in $G_{train}$ to avoid running into issues with unseen nodes in the network.
+
+After the above, we end up with the following networks:
 \begin{itemize}
-\item Simple user features such as the number of hot compliments.
-\item Other metrics for the user found in the Yelp Dataset.
-\item Business metrics such as its category, whether it is open or not, and its postal code.
-\item We concatenate reviews by the same user and use these as an input feature to an RNN for language extraction.
-\item Similarly, we can concatenate reviews of business and use these for features relating to the business nodes.
-\item We use photos (when available) as input features for the businesses by using transfer learning to transfer some.
-\item There is additional data associate with each node which we can use and extract.
+\item $G_{train} = (V_{train}, E_{train})$ with $|V_{train}| = 375,149$ where we have $283,085$ users and $92,064$. We also have $|E_{train}| = 599,133$, which is an incredibly sparse graph given (only $0.00143945169412\%$ of edges exists, even taking into account the bipartite structure of the graph).
+\item $G_{val} = (V_{val}, E_{val})$ with $|V_{val}| = 75,466$ and $|E_{val}| = 88,079$.
+\item $G_{test} = (V_{test}, E_{test})$ with $|V_{test}| = 67.125$ and $|E_{val}| = 73,730$.
 \end{itemize}
+
+Note that we've split the data essentially into an $80\%, 10\%, 10\%$ split. For more details on the graph structures, see Appendix \ref{sec:graph_distributions}. Given the sparsity of the graph, we focus on predicting the star rating given that an edge is created between user $u$ and business $b$. As such, our dataset does not contain any negative examples. We leave this predictive problem for open investigation. Furthermore, given the extreme size of our data, we process and train our models using Google Compute Engine with 8 vcpus and 30GB of memory.
+
+\subsubsection{Graph Features}
+Now that we have partitioned our data into training, validation, and testing, we move forward with calculating some rating prediction scores. We first focus on calculating multiple properties from our generated graph. In fact, we calculate the following:
+
+\begin{itemize}
+\item \textbf{Number of Common Raters:} For each pair $(u,b)$ of user and business, we calculate the number of common raters. A common rater is an extension of neighbors, in the sense that this is someone who has also rated $b$.
+\item \textbf{Number of Common Business:} For each pair $(b,u)$ of user and business, we calculate the number of common businesses. A common business is an extension of neighbors, in the sense that this is a business someone who has also rated $b$.
+\item \textbf{Average Rating of Common Raters:} For each pair $(u,b)$ of user and business, we calculate the number of common raters. A common rater is an extension of neighbors, in the sense that this is someone who has also rated $b$.
+\item \textbf{Average Rating of Common Business:} For each pair $(u,b)$ of user and business, we calculate the number of common raters. A common rater is an extension of neighbors, in the sense that this is someone who has also rated $b$.
+\item \textbf{Preferential Attachment}: We take the product of the average star rating of businesses rated by $u$ and the average star rating of raters of business $b$. We expect this value to indicate the relative popularity.
+\item \textbf{Page Rank:} We treat the graph as an unweighed undirected graph and calculate the page rank value for all nodes and assign their sum as a feature.
+\item \textbf{Eigenvector Centrality}: We calculate the global centrality of a node (compared to its neighbors) and use the sum as a feature.
+\item \textbf{Adamic-Adar measure}: We look at common neighbors (as defined previously) and sum the inverse of the sum of their degrees (considering the graph to be weighed). Intuitively, this creates a measure for similarity where nodes with the same degreed neighbors are more similar.
+\end{itemize}
+
+
+Once calculate for our training, validation, and test data sets, all of the features are normalized to have unit mean and unit variance as is standard practice in machine learning problems.
+  
+
+\subsection{Item Feature Based Predictor}
+
+We create a model which predicts the star ratings based only on the properties of the items in our training and test datasets. 
 
 \section{Results and Discussion}
-In this section, we present the results of our models.
+In this section, we presents the results on our test set and provide some discussion as to the extent to which our models successfully predicted Yelp review ratings.
 
 \subsection{Summary Statistics}
 We present some analysis on our networks defined above. 
 
 \subsubsection{Users}
-We present some overview of the user metadata. In Figure \ref{fig:user_characteristics}, we can see that multiple characteristics of the users follow a power-law degree distributions -- and not just the node degrees. This is to say that the distribution can be modelled as $P(k) \propto k^{-\gamma}$The power-law distribution is immediate evident in:
+We present some overview of the user meta-data. In Figure \ref{fig:user_characteristics}, we can see that multiple characteristics of the users follow a power-law degree distributions -- and not just the node degrees. This is to say that the distribution can be modeled as $P(k) \propto k^{-\gamma}$. The power-law distribution is immediately evident in:
 
 \begin{itemize}
-\item Number of review -- we have a few users that write many rewiews and many users that write few reviews
+\item Number of review -- we have a few users that write many reviews and many users that write few reviews.
 \item Number of friends -- this means the network follows a true-power law distribution.
 \item useful/funny/cool/fans -- this appears to demonstrate that social ranking/status also follows a power-law distribution in the Yelp social network. This trend is further demonstrated by Figure \ref{fig:user_compliment_distribution}.
 \end{itemize} 
@@ -307,11 +388,11 @@ We present some overview of the user metadata. In Figure \ref{fig:user_character
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.5\textwidth]{../shared/figures/distribution_user_characteristics}
-\caption{Frequency of countable user charatersitics -- the majority exhibit a powerlaw distributions}
+\caption{Frequency of countable user characteristics -- the majority exhibit a power-law distributions}
 \label{fig:user_characteristics}
 \end{figure}
 
-Furthermore, we can look at the averate rating given by users, across the network. The results are shown in a log plot in Figure \ref{fig:user_rating_distribution}.
+Furthermore, we can look at the average rating given by users, across the network. The results are shown in a log plot in Figure \ref{fig:user_rating_distribution}.
 
 \begin{figure}[h!]
 \centering
@@ -347,18 +428,90 @@ We present some overview of the user metadata. In Figure \ref{fig:business_revie
 \end{figure}
 
 \subsection{Review Prediction}
-In this section, we will compare the different methods utilized for review prediction. The methods include but are not limited to those discussed in the methods section above. We have yet to attempt making predictions, as this is a work-in-progress section.
+We now present the final results from our models, each evaluated on the test set. We compare the different methods used, and discuss their differences and possible improvements. 
 
-We will likely evaluate the results using $RMSE$ between the predicted score and the actual score. So over our testing set $T$, we will calculate:
-$$
-RMSE = \sqrt{\frac{1}{|T|} \sum_{t \in T}(t - \hat{t})^2}
-$$
 
 \section{Future Work}
+The project could be continued in several directions. In particular, we could continue to follow the example set by \cite{PintrestProject} and consider some of the temporal features of the graph structure. 
+
+
+There are several directions that we could pursue for
+the continuation of this project. First, we believe that
+there is significant potential to be had with our dynamic
+temporal feature extraction. Perhaps one of
+the most logical extensions is to use a sliding window
+approach – intuitively, our current method trains
+on a single set of 5 previous graph transitions to predict
+edges formed in the next time frame. If we
+could “slide” this window across different points of
+the Pinterest network’s history – extracting training
+examples over this window as we go – we might obtain
+more generalizable results. This approach would
+thus be akin to a bigram/trigram extraction used frequently
+in text classification. We might also consider
+changing the window size – our qualitative results
+demonstrate that more recent events are more
+important in determining link prediction, so perhaps
 
 In the final report, we will present the results from training our end-to-end prediction model making use of both metadata and network structure features. We have yet to train a model on the entire data set. We will be using pre-trained deep-networks, such as VGGNet16 (for parsing images) and word2vec for parsing the natural language in the reviews.
 
+\section{Acknowledgments}
+The author would like to thank Jure Leskovec and the rest of the CS224W staff for their continued guidance and advice during the course of the project. In particular, for emphasizing a focus on network properties.
+
 \bibliography{../shared/references}{}
 \bibliographystyle{plain}
+
+\section{Appendix}
+
+\subsection{Graph Distributions}
+\label{sec:graph_distributions}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.5\textwidth]{../shared/figures/scc_destribution_gtrain.png}
+\caption{distribution of sizes of strongly connected components of $G_{train}$}
+\label{fig:distribution_scc_g_train}
+\end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.5\textwidth]{../shared/figures/scc_destribution_gval.png}
+\caption{distribution of sizes of strongly connected components of $G_{val}$}
+\label{fig:distribution_scc_g_val}
+\end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.5\textwidth]{../shared/figures/scc_destribution_gtest.png}
+\caption{distribution of sizes of strongly connected components of $G_{test}$}
+\label{fig:distribution_scc_g_test}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.5\textwidth]{../shared/figures/outDeg_degree_gtrain.png}
+\caption{distribution of sizes of strongly connected components of $G_{train}$}
+\label{fig:degree_distribution_g_train}
+\end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.5\textwidth]{../shared/figures/outDeg_degree_gval.png}
+\caption{distribution of sizes of strongly connected components of $G_{val}$}
+\label{fig:degree_distribution_g_val}
+\end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.5\textwidth]{../shared/figures/outDeg_degree_gtest.png}
+\caption{distribution of sizes of strongly connected components of $G_{test}$}
+\label{fig:degree_distribution_g_test}
+\end{figure}
+
+
+\subsection{Other}
+
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.5\textwidth]{../shared/figures/distribution_of_users_joining_over_time}
+\caption{Number of new users joining Yelp over time.}
+\label{fig:users_join_over_time}
+\end{figure}
 
 \end{document}

@@ -370,3 +370,7 @@ TSWLatexianTemp*
 
 # Hide the data folder.
 yelp_data/*
+
+# Hid any bad extensions.
+*.tab
+*.plt
