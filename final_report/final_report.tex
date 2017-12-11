@@ -436,68 +436,13 @@ $$
 
 \end{itemize}
 
-\subsection{Item Feature Based Predictor}
+\subsection{Extracting Item Features}
 
-We create a model which predicts the star ratings based only on the properties of the items in our training and test datasets. For example, we can use the pictures and natural language examples to train a model.
+Given our results (see Results section) from the above models, we continue forward with our deep neural network. We begin by augmenting the data available for the business nodes. 
+
 
 \section{Results and Discussion}
 In this section, we presents the results on our test set and provide some discussion as to the extent to which our models successfully predicted Yelp review ratings.
-
-\subsection{Summary Statistics}
-We present some analysis on our networks defined above. 
-
-\subsubsection{Users}
-We present some overview of the user meta-data. In Figure \ref{fig:user_characteristics}, we can see that multiple characteristics of the users follow a power-law degree distributions -- and not just the node degrees. This is to say that the distribution can be modeled as $P(k) \propto k^{-\gamma}$. The power-law distribution is immediately evident in:
-
-\begin{itemize}
-\item Number of review -- we have a few users that write many reviews and many users that write few reviews.
-\item Number of friends -- this means the network follows a true-power law distribution.
-\item useful/funny/cool/fans -- this appears to demonstrate that social ranking/status also follows a power-law distribution in the Yelp social network. This trend is further demonstrated by Figure \ref{fig:user_compliment_distribution}.
-\end{itemize} 
-
-\begin{figure}[h!]
-\centering
-\includegraphics[width=0.5\textwidth]{../shared/figures/distribution_user_characteristics}
-\caption{Frequency of countable user characteristics -- the majority exhibit a power-law distributions}
-\label{fig:user_characteristics}
-\end{figure}
-
-Furthermore, we can look at the average rating given by users, across the network. The results are shown in a log plot in Figure \ref{fig:user_rating_distribution}.
-
-\begin{figure}[h!]
-\centering
-\includegraphics[width=0.5\textwidth]{../shared/figures/average_user_rating_distribution}
-\caption{Distribution of Average user Rating}
-\label{fig:user_rating_distribution}
-\end{figure}
-
-We notice that the ratings tend to be inflated (3-5) stars being quite frequent, while 1-2 stars being very infrequent. Presumable this might be due to the fact that people do not frequent poor restaurants. The other aspect that is immediately apparent is the spikes at even numbered ratings -- this is likely due to users who have rated only one once, of which we have many.
-
-\begin{figure}[h!]
-\centering
-\includegraphics[width=0.5\textwidth]{../shared/figures/compliement_type_distribution}
-\caption{Distribution of Received user Compliments}
-\label{fig:user_compliment_distribution}
-\end{figure}
-
-\subsubsection{Businesses}
-We present some overview of the user meta-data. In Figure \ref{fig:business_review_distribution}, we can see that the power-law distribution is also respected in the business side. Furthermore, we can also see that businesses tend to be rated quite highly, on average, with most businesses either having in the range from 3-5 (see Figure \ref{fig:business_star_distribution}).
-
-\begin{figure}[h!]
-\centering
-\includegraphics[width=0.5\textwidth]{../shared/figures/business_review_count_distribution}
-\caption{Business Review Distribution}
-\label{fig:business_review_distribution}
-\end{figure}
-
-\begin{figure}[h!]
-\centering
-\includegraphics[width=0.5\textwidth]{../shared/figures/business_star_distribution}
-\caption{Business Average Star Distribution}
-\label{fig:business_star_distribution}
-\end{figure}
-
-\subsection{Review Prediction}
 
 % Please add the following required packages to your document preamble:
 % \usepackage[normalem]{ulem}
@@ -567,31 +512,92 @@ We present some overview of the user meta-data. In Figure \ref{fig:business_revi
 
 We now present the final results from our models, each evaluated on the test set. We compare the different methods used, and discuss their differences and possible improvements. The main results are presented in Table \ref{table:test_set_results}, with the validation data set results in Table \ref{table:validation_set_results} and the training data set results in Table \ref{table:trainint_set_results}. 
 
+We have implemented a complete end-to-end pipeline which begins with the (1) raw Yelp JSON data, (2) construct training, validation, and testing graphs over the data by our pre-determined timescales, (3) extracts training, validation, and testing sets from the graphs generated and computes a variety of network properties to be used by our machine learning models and (4) trains a variety of machine learning models on the extracted data and tunes their hyper-parameters when possible, (5) culminating in the evaluation of the models on the known results from the test set. We implements this work, wrote optimized code for feature extraction, and built our networks. Everything was implemented ourselves with the use of SNAP, Python, scikit-learn, and PyTorch -- the code base is publicly available at GitHub \footnote{https://github.com/kandluis/cs224w-project}.
+
+The major challenge faced when experimenting was the sheer size of the dataset -- even after sub-setting the data to a more manageable size in the millions and using the extremely powerful Google Compute Engine to add additional memory and processing power, more complex models such as random forest and the convolution neural networks could take in the order of days to fully train. Even extracting the word embeddings and pre-trained image feature vectors with VGGNet and ResNet would alone take a significant amount of time -- so much so that it proved unfeasible to do for a large portion of the dataset.
+
+As such, as described in our Methods section, we were able to sample only approximately one years worth of data from the Yelp review network. However, despite this, we were nonetheless able to train the network predictors on over 500k training samples (reviews) which contained over 280k users and over 92k businesses (for more than 375k nodes), and validate and test our network models on over 88K and 73K examples respectively.
+
+Finally, to evaluate the performance of all of our models we make use of RMSE, relative error, and the score function defined in our methods. Our results can be see in Table \ref{table:trainint_set_results}, Table \ref{table:test_set_results}, and Table \ref{table:validation_set_results}.
+
+\section{Discussion}
+We begin the discussion by analyzing some network properties.
+
+\subsection{Summary Statistics}
+\subsubsection{Users}
+We present some overview of the user meta-data. In Figure \ref{fig:user_characteristics}, we can see that multiple characteristics of the users follow a power-law degree distributions -- and not just the node degrees. This is to say that the distribution can be modeled as $P(k) \propto k^{-\gamma}$. The power-law distribution is immediately evident in:
+
+\begin{itemize}
+\item Number of review -- we have a few users that write many reviews and many users that write few reviews.
+\item Number of friends -- this means the network follows a true-power law distribution.
+\item useful/funny/cool/fans -- this appears to demonstrate that social ranking/status also follows a power-law distribution in the Yelp social network. This trend is further demonstrated by Figure \ref{fig:user_compliment_distribution}.
+\end{itemize} 
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.5\textwidth]{../shared/figures/distribution_user_characteristics}
+\caption{Frequency of countable user characteristics -- the majority exhibit a power-law distributions}
+\label{fig:user_characteristics}
+\end{figure}
+
+Furthermore, we can look at the average rating given by users, across the network. The results are shown in a log plot in Figure \ref{fig:user_rating_distribution}.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.5\textwidth]{../shared/figures/average_user_rating_distribution}
+\caption{Distribution of Average user Rating}
+\label{fig:user_rating_distribution}
+\end{figure}
+
+We notice that the ratings tend to be inflated (3-5) stars being quite frequent, while 1-2 stars being very infrequent. Presumable this might be due to the fact that people do not frequent poor restaurants. The other aspect that is immediately apparent is the spikes at even numbered ratings -- this is likely due to users who have rated only one once, of which we have many.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.5\textwidth]{../shared/figures/compliement_type_distribution}
+\caption{Distribution of Received user Compliments}
+\label{fig:user_compliment_distribution}
+\end{figure}
+
+\subsubsection{Businesses}
+We present some overview of the user meta-data. In Figure \ref{fig:business_review_distribution}, we can see that the power-law distribution is also respected in the business side. Furthermore, we can also see that businesses tend to be rated quite highly, on average, with most businesses either having in the range from 3-5 (see Figure \ref{fig:business_star_distribution}).
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.5\textwidth]{../shared/figures/business_review_count_distribution}
+\caption{Business Review Distribution}
+\label{fig:business_review_distribution}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.5\textwidth]{../shared/figures/business_star_distribution}
+\caption{Business Average Star Distribution}
+\label{fig:business_star_distribution}
+\end{figure}
+
+\subsection{Review Prediction}
+We continue our discussing by now focusing on the results for our model predictions.
+
+We can see that extracting network-only data and using machine learning models to fit the ratings seems to perform relatively well, even with simple, un-regularized linear regression. It appears that the features we selected, for example the nearest neighbors and the average ratings, are quite effective at both capturing network properties as well as capturing the user ratings. We did not need to extend the network to include further metadata information, and the results were nonetheless quite good, especially when compared to our non-trivial baseline.
+
+Furthermore, we note that our feature extraction proved extremely effective at generalizing across models. We see that in particular, the deep neural network and the random forest models both performed extremely well. It's interesting to note that the random forest model appears to have over-fit the data by a significant margin. This appeared promising on the training set but did not pan-out when we took the model to unseen data. However, we note that the neural net performed the best -- this appears to lead credence to the idea that the function learned is inherently non-linear, at least in the feature space we selected. This is somewhat counter to what we originally hypothesized, since all of the original features are approximately in the same scale as the ratings and would, intuitively, appear to predict the ratings rather directly. This idea is supported by the t-Sne embedding in Figure, where we embed our test set in a lower dimensional space (given the features extracted) and we color each based on the rating given (from $0,1,2,3,4,5$). 
+
+
+This intuitively gives us a good foundation for why the features we choose appear to be so well correlated. Furthermore, we note that the embedding shows a clear non-linear distribution, which appears to corroborate the results where our neural network performed the best. This seems to imply that a neural network would be the best approach to disambiguate between the possible ratings a user might assign to a business. We found the issue of predicting the lack of edges to be somewhat more nuanced and subtle, though initial experiments with this approach proved promising.
+
+Another promising aspect involves using the photographic and textual descriptions of businesses as input features to our predictive models. Despite making use of pre-trained word-embeddings and pre-trained image models, the computational cost for the models proved extreme for our dataset. Sub-setting into smaller set showed some initially results which appeared positive, however the smaller dataset makes it difficult to determine whether the additional information was accurately fed into the models and used effectively. However, it does appear that the networks performed well overall, and at least learned to make use of the features from the images.
+
+\section{Conclusion}
+In this paper, we have presented a novel approach towards review rating prediction in a subset of the Yelp review network. We have investigated the effectiveness of network-only machine learning models, determining 9 key structural features of the network that proved effective in predicting the weight of unseen edges after using supervised algorithms to generate the models. We demonstrated that a deep neural net even with the limited feature set was the most effective and most general approach. Furthermore, we performed early experiments in making use of none-network features to improve the predictions of the neural network. We did this by creating a pipeline building on previous work were for each $(u,b)$ pair, the business descriptions were converted into their respective word-embeddings using the popular word2vect network followed by an RNN which output a fixed sized 256 feature vector for each business. Furthermore, we selected key images from the business and the photo dataset provided by yelp and ran them through pre-trained VGGNet network with the final classification layer removed to generate multiple 4096-dimensional feature vectors per image. These feature vectors were then averaged and fed as additional input into a final fully-connected neural network. These preliminary results showed marginal improvement in the accuracy of the results. This shows not only that our original models are able to understand higher order relationships within the Yelp review network, but are also able to understand features (and build on them) specific to each node.
 
 
 \section{Future Work}
-The project could be continued in several directions. In particular, we could continue to follow the example set by \cite{PintrestProject} and consider some of the temporal features of the graph structure. 
+The project could be continued in several directions. In particular, we could continue to follow the example set by \cite{PintrestProject} and consider some of the temporal features of the graph structure. They proposed using a sliding window approach to achieve improved accuracy in link-prediction, which could easily be modified to support review prediction in the Yelp network.
 
+Furthermore, our preliminary work incorporating deep convolution neural nets and recurrent neural nets to extract feature embeddings for the businesses have demonstrated marginal capabilities of improving the predictive power of our models. Further work could be done in this area by, rather than extracting static embeddings, incorporating the visual and textual networks into an end-to-end model which could tweak the learned weights for visual and textual processing in order to have better understanding of how these features related to the ratings given to businesses by users. Furthermore, would like to see further work placed into whether user features can similar be used to improve performance -- for example, finding embeddings of users based on their features and using these embeddings as inputs to our model.
 
-There are several directions that we could pursue for
-the continuation of this project. First, we believe that
-there is significant potential to be had with our dynamic
-temporal feature extraction. Perhaps one of
-the most logical extensions is to use a sliding window
-approach – intuitively, our current method trains
-on a single set of 5 previous graph transitions to predict
-edges formed in the next time frame. If we
-could “slide” this window across different points of
-the Pinterest network’s history – extracting training
-examples over this window as we go – we might obtain
-more generalizable results. This approach would
-thus be akin to a bigram/trigram extraction used frequently
-in text classification. We might also consider
-changing the window size – our qualitative results
-demonstrate that more recent events are more
-important in determining link prediction, so perhaps
+Lastly, there's additional work to be done to incorporate even more graph features into the predictive model. Given the effectiveness of the network structure itself at predicting the values of unseen ratings alone, we would like to explore further network features and models and see how this additional information can improve our models.
 
-In the final report, we will present the results from training our end-to-end prediction model making use of both metadata and network structure features. We have yet to train a model on the entire data set. We will be using pre-trained deep-networks, such as VGGNet16 (for parsing images) and word2vec for parsing the natural language in the reviews.
 
 \section{Acknowledgments}
 The author would like to thank Jure Leskovec and the rest of the CS224W staff for their continued guidance and advice during the course of the project. In particular, for emphasizing a focus on network properties.
@@ -606,38 +612,38 @@ The author would like to thank Jure Leskovec and the rest of the CS224W staff fo
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.5\textwidth]{../shared/figures/scc_destribution_gtrain.png}
-\caption{distribution of sizes of strongly connected components of $G_{train}$}
+\caption{Distribution of sizes of strongly connected components of $G_{train}$}
 \label{fig:distribution_scc_g_train}
 \end{figure}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.5\textwidth]{../shared/figures/scc_destribution_gval.png}
-\caption{distribution of sizes of strongly connected components of $G_{val}$}
+\caption{Distribution of sizes of strongly connected components of $G_{val}$}
 \label{fig:distribution_scc_g_val}
 \end{figure}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.5\textwidth]{../shared/figures/scc_destribution_gtest.png}
-\caption{distribution of sizes of strongly connected components of $G_{test}$}
+\caption{Distribution of sizes of strongly connected components of $G_{test}$}
 \label{fig:distribution_scc_g_test}
 \end{figure}
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.5\textwidth]{../shared/figures/outDeg_degree_gtrain.png}
-\caption{distribution of sizes of strongly connected components of $G_{train}$}
+\caption{Distribution of sizes of strongly connected components of $G_{train}$}
 \label{fig:degree_distribution_g_train}
 \end{figure}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.5\textwidth]{../shared/figures/outDeg_degree_gval.png}
-\caption{distribution of sizes of strongly connected components of $G_{val}$}
+\caption{Distribution of sizes of strongly connected components of $G_{val}$}
 \label{fig:degree_distribution_g_val}
 \end{figure}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.5\textwidth]{../shared/figures/outDeg_degree_gtest.png}
-\caption{distribution of sizes of strongly connected components of $G_{test}$}
+\caption{Distribution of sizes of strongly connected components of $G_{test}$}
 \label{fig:degree_distribution_g_test}
 \end{figure}
 
