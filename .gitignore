@@ -374,3 +374,4 @@ yelp_data/*
 # Hid any bad extensions.
 *.tab
 *.plt
+*.tgn
