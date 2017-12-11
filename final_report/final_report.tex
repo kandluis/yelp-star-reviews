@@ -105,7 +105,7 @@ In general, there are three areas of interest in the literature. We have (1) wor
 
 \subsection{Graph-Based Approaches}
 
-Liben-Nowell and Kleinberg \cite{TheLinkPredictionProblemForSocialNetworks} formalize the \textit{link prediction problem} and develop a proximity-based approach to predict the formation of links in a large co-authorship network. The model focuses on the network topology alone, ignoring any additional meta-data associated with each node since its basic hypothesis is that the known network connections offer sufficient insight to accurately predict network growth over time. They formally tackle the problem of given a social graph $G = (V,E)$ where each edge represents an interaction between $u,v$ and a particular timestamp $t$, can we use a subset of the graph across time (ie, with edges only in the interval $[t,t']$ to predict a future subset of the graph $G'$). The methods presented ignore the creation of new nodes, focusing only on edge prediction.
+Liben-Nowell and Kleinberg \cite{TheLinkPredictionProblemForSocialNetworks} formalize the \textit{link prediction problem} and develop a proximity-based approach to predict the formation of links in a large co-authorship network. The model focuses on the network topology alone, ignoring any additional meta-data associated with each node since its basic hypothesis is that the known network connections offer sufficient insight to accurately predict network growth over time. They formally tackle the problem of given a social graph $G = (V,E)$ where each edge represents an interaction between $u,v$ and a particular timestamps $t$, can we use a subset of the graph across time (ie, with edges only in the interval $[t,t']$ to predict a future subset of the graph $G'$). The methods presented ignore the creation of new nodes, focusing only on edge prediction.
 
 Multiple predictors $p$ are presented, each focusing on only network structure. For example, some intuitive predictors (there are many others studied, though not necessarily as intuitive) for the edge creation between $x$ and $y$:
 
@@ -168,7 +168,7 @@ Our dataset is the set released for the Yelp Data Set Challenge Round 10 \cite{Y
 \begin{itemize}
 \item \textbf{Businesses}: Consists of exactly 156,639 businesses. It contains data about businesses on Yelp including geographical location, attributes, and categories.
 \item \textbf{Reviews}: 4,736,897 reviews. It contains full review text (for NLP processing) as well as the user id that wrote the review and the business id the review is written for. It also contains the number of stars given, as well as the number of useful, funny, and cool up-votes (finally, it also contains the date).
-\item \textbf{Users}: 1,183,362 Yelp users. It includes the user's friend mapping and all the metadata associated with the user. Just this single dataset consists contains 538,440,966 edges.
+\item \textbf{Users}: 1,183,362 Yelp users. It includes the user's friend mapping and all the meta-data associated with the user. Just this single dataset consists contains 538,440,966 edges.
 \item \textbf{Tips}: 1,028,802 tips. Tips are associated with each business and are written by users. Tips are similar to reviews, but without rating and usually much shorter.
 \item \textbf{Photos:} 196,278 Photos, each associated with businesses. The photos are also associated with captions.
 \item \textbf{Check-ins:} 135,148 check-ins on a business (this a business only attribute).
@@ -349,7 +349,7 @@ After the above, we end up with the following networks:
 \item $G_{test} = (V_{test}, E_{test})$ with $|V_{test}| = 67.125$ and $|E_{val}| = 73,730$.
 \end{itemize}
 
-Note that we've split the data essentially into an $80\%, 10\%, 10\%$ split. For more details on the graph structures, see Appendix \ref{sec:graph_distributions}. Given the sparsity of the graph, we focus on predicting the star rating given that an edge is created between user $u$ and business $b$. As such, our dataset does not contain any negative examples. We leave this predictive problem for open investigation. Furthermore, given the extreme size of our data, we process and train our models using Google Compute Engine with 8 vcpus and 30GB of memory.
+Note that we've split the data essentially into an $80\%, 10\%, 10\%$ split. For more details on the graph structures, see Appendix \ref{sec:graph_distributions}. Given the sparsity of the graph, we focus on predicting the star rating given that an edge is created between user $u$ and business $b$. As such, our dataset does not contain any negative examples. We leave this predictive problem for open investigation. Furthermore, given the extreme size of our data, we process and train our models using Google Compute Engine with 8 CPUs and 30GB of memory.
 
 \subsubsection{Graph Features}
 Now that we have partitioned our data into training, validation, and testing, we move forward with calculating some rating prediction scores. We first focus on calculating multiple properties from our generated graph. In fact, we calculate the following:
@@ -441,8 +441,26 @@ $$
 Given our results (see Results section) from the above models, we continue forward with our deep neural network. We begin by augmenting the data available for the business nodes. 
 
 \begin{itemize}
-\item We make use of the pre-trained SqueezeNet network included in the PyTorch model zoo for visual image processing. We first downsample the images to the expected 128x128x3 input (we do this simply by cropping and averaging pixel values over regions mapping into the 128x128 space). We can then feed these smaller images directly into the pre-trained squeezen. Each image produces a final 
+\item We make use of the pre-trained SqueezeNet network included in the PyTorch model zoo for visual image processing. We first down-sample the images to the expected 256x256x3 input (we do this simply by cropping and averaging pixel values over regions mapping into the 256x256xspace).
+\item We can then feed these smaller images directly into the pre-trained squeezenet (see Figure \ref{fig:squeezenet_architecture} for architecture) which has been modified to remove the final soft-max layer (and instead we produce a vector in $\mathbb{R}^1000$.
+\item For a business $b$, we take the $p_i^b \in \mathbb{R}^1000$ and compute their mean. We use this embedding as a representation of the business.
+
+\item Furthermore, we make use of the pre-trained word-embedding and take the business description and generate a small 256-dimensional vector.
+\item We concatenate the above vectors into a 1000 + 256 + 9 vector, which we take as input into a modified neural net.
 \end{itemize}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.5\textwidth]{../shared/figures/squeezenet.jpg}
+\caption{Original SqueezeNet Architecture. We modify it to remove the final soft-max layer and instead output a $1000$ embedding for our images.}
+\label{fig:squeezenet_architecture}
+\end{figure}
+
+The meat of the model consists of a neural net which takes a input as 1265-length vector for each $(u,b)$ pair and runs through through a single layer with 200 hidden units (so number of parameters is 200x1265). We then take this and feed it into the successful network described in the previous section and evaluate it in the same way as described before.
+
+\subsubsection{Training and Date}
+
+Due to the large size of the above networks, we subset the data significantly into a much smaller amount of only ~15k reviews. We select the businesses with the most photos as the candidates to subset by, and make sure we take the reviews which include these businesses. With the reduced data size, we are able to successfully train our specified model end-to-end and achieve a marginal improvement over our previous models.
 
 
 \section{Results and Discussion}
@@ -465,6 +483,7 @@ In this section, we presents the results on our test set and provide some discus
 \textit{Bayesian Regression} & 1.29409213097                      & 20.3975770983                          & 0.257107941987                                    \\ \cline{1-1}
 \textit{Neural Network}      & 1.26509191767                      & 18.7831282852                          & 0.290030838364                                    \\ \cline{1-1}
 \textit{Random Forest}       & \textbf{0.749654164334}            & \textbf{10.0184313324}                 & \textbf{0.750702893173}                           \\ \cline{1-1}
+\textit{\textbf{Business Features}}       & 1.24943163247            & 16.2852635532                 & 0.32123445344                           \\ \cline{1-1}
 \end{tabular}
 \end{table*}
 }
@@ -490,6 +509,7 @@ In this section, we presents the results on our test set and provide some discus
 \textit{Bayesian Regression} & 1.18378759889                      & 18.2857790551                          & 0.312534028173                                    \\ \cline{1-1}
 \textit{Neural Network}      & \textbf{1.16442192777}             & \textbf{16.0869919882}                 & \textbf{0.334842664919}                           \\ \cline{1-1}
 \textit{Random Forest}       & 1.18801209881                      & 18.6598898159                          & 0.307618649842                                    \\ \cline{1-1}
+\textit{\textbf{Business Features}}       & 1.14952444234            & 14.8854451849                 & 0.35986245424                           \\ \cline{1-1}
 \end{tabular}
 \end{table*}
 }
@@ -510,6 +530,7 @@ In this section, we presents the results on our test set and provide some discus
 \textit{Bayesian Regression} & 1.19927256299                      & 18.567542783                           & 0.327906243749                                    \\ \cline{1-1}
 \textit{Neural Network}      & \textbf{1.1838237529}              & \textbf{16.3219078547}                 & \textbf{0.34511029369}                            \\ \cline{1-1}
 \textit{Random Forest}       & 1.19281377927                      & 18.7137709175                          & 0.335125985417                                    \\ \cline{1-1}
+\textit{\textbf{Business Features}}       & 1.1694425252            & 15.4556500245                 & 0.35111454552                           \\ \cline{1-1}
 \end{tabular}
 \end{table*}
 }
@@ -584,7 +605,7 @@ We continue our discussing by now focusing on the results for our model predicti
 
 We can see that extracting network-only data and using machine learning models to fit the ratings seems to perform relatively well, even with simple, un-regularized linear regression. It appears that the features we selected, for example the nearest neighbors and the average ratings, are quite effective at both capturing network properties as well as capturing the user ratings. We did not need to extend the network to include further metadata information, and the results were nonetheless quite good, especially when compared to our non-trivial baseline.
 
-Furthermore, we note that our feature extraction proved extremely effective at generalizing across models. We see that in particular, the deep neural network and the random forest models both performed extremely well. It's interesting to note that the random forest model appears to have over-fit the data by a significant margin. This appeared promising on the training set but did not pan-out when we took the model to unseen data. However, we note that the neural net performed the best -- this appears to lead credence to the idea that the function learned is inherently non-linear, at least in the feature space we selected. This is somewhat counter to what we originally hypothesized, since all of the original features are approximately in the same scale as the ratings and would, intuitively, appear to predict the ratings rather directly. This idea is supported by the t-Sne embedding in Figure \ref{fig:tsne_embedding}, where we embed our test set in a lower dimensional space (given the features extracted) and we color each based on the rating given (from $1,2,3,4,5$). 
+Furthermore, we note that our feature extraction proved extremely effective at generalizing across models. We see that in particular, the deep neural network and the random forest models both performed extremely well. It's interesting to note that the random forest model appears to have over-fit the data by a significant margin. This appeared promising on the training set but did not pan-out when we took the model to unseen data. However, we note that the neural net performed the best -- this appears to lead credence to the idea that the function learned is inherently non-linear, at least in the feature space we selected. This is somewhat counter to what we originally hypothesized, since all of the original features are approximately in the same scale as the ratings and would, intuitively, appear to predict the ratings rather directly. This idea is supported by the t-SNE embedding in Figure \ref{fig:tsne_embedding}, where we embed our test set in a lower dimensional space (given the features extracted) and we color each based on the rating given (from $1,2,3,4,5$). 
 
 \begin{figure}[h!]
 \centering
@@ -607,7 +628,9 @@ The project could be continued in several directions. In particular, we could co
 
 Furthermore, our preliminary work incorporating deep convolution neural nets and recurrent neural nets to extract feature embeddings for the businesses have demonstrated marginal capabilities of improving the predictive power of our models. Further work could be done in this area by, rather than extracting static embeddings, incorporating the visual and textual networks into an end-to-end model which could tweak the learned weights for visual and textual processing in order to have better understanding of how these features related to the ratings given to businesses by users. Furthermore, would like to see further work placed into whether user features can similar be used to improve performance -- for example, finding embeddings of users based on their features and using these embeddings as inputs to our model.
 
-Lastly, there's additional work to be done to incorporate even more graph features into the predictive model. Given the effectiveness of the network structure itself at predicting the values of unseen ratings alone, we would like to explore further network features and models and see how this additional information can improve our models.
+Lastly, there's additional work to be done to incorporate even more graph features into the predictive model. Given the effectiveness of the network structure itself at predicting the values of unseen ratings alone, we would like to explore further network features and models and see how this additional information can improve our models. This can include incorporating the information about tips -- we would expect someone that has given a tip to be more likely to rate the business positively (or negatively).
+
+In any case, we believe that there is yet much work to be done in this field and many potential interesting developments in the area of combining non-network features with network features.
 
 
 \section{Acknowledgments}
