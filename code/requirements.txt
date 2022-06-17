@@ -57,7 +57,7 @@ pytz==2017.2
 PyYAML==5.4
 pyzmq==16.0.2
 qtconsole==4.3.1
-rsa==3.4.2
+rsa==4.7
 s3transfer==0.1.11
 scandir==1.6
 scikit-learn==0.19.1
